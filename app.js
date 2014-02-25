@@ -12,8 +12,8 @@ var persons = null;
 
 
 
-var ip_addr = '127.0.0.1';
-var port = '8080';
+var ip_addr = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
+var port = process.env.OPENSHIFT_NODEJS_PORT || '8080';
 
 var server = restify.createServer({
 	name: "testapp"
