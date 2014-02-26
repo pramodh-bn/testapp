@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mount Sinai Test</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/person.js"></script>
+    <script>
+    $(function(){
+    	var persons = null;
+      var perArr = [];
+      var url_loc = "http://myapp-pranna.rhcloud.com/person"
+      //var per = new Person("1", "joe", "brown", "1988-08-01", "120", "UK");
+      //console.log(per.getDOB());
+      //console.log(per.getWage());
+    	ajaxLoad();
+    	function ajaxLoad(){
+	    	$.ajax({
+	    		url: url_loc,
+	    		dataType: 'json'
+	    	}).then(function(data){
+	    		populatePersonData(data);
+	    	});
+    	}
+
+    	function populatePersonData(data) {
+    		$('#userlist').empty();
+        perArr = [];
+    		//console.log("populatePersonData");
+    		//console.log(data);
+    		persons = data.persons;
+    		//console.log(persons);
+        $.each(persons.person, function(i, item) {
+				//console.log(persons[i]);
+          var person = new Person(item.id, item.fname, item.lname, item.DOB, item.wage, item.location);
+          perArr.push(person);
+				  //$('#userlist').append('<div class="col-sm-10"><li><a href="#edit-data" data-uuid=' + item.id + '><h3>' + item.fname + "," + item.lname + '</h3></a></li></div>');			
+        });
+        $('#edit-data').hide();
+        $('#json-data').hide();
+        $('#add-person').hide(); 
+        //console.log(perArr);
+        for (var i = 0 ; i <= perArr.length - 1; i++) {
+          //console.log(perArr[i].getDOB(), perArr[i].getWage());
+          $('#userlist').append('<div class="col-sm-10"><li><a href="#edit-data" ind= '+ i +' data-uuid=' + perArr[i].id + '><h3>' + perArr[i].fname + "," + perArr[i].lname + '</h3></a></li></div>');        
+        };
+    	}
+
+    	$("#userlist").on('click', 'a', function(){
+        $('#add-person').hide();
+        $('#json-data').hide();
+        $('#edit-data').show();
+        //console.log($(this).attr('ind'));
+    		id = $(this).attr("data-uuid");
+        //$.each(persons.person, function(i, item) {
+				  //console.log(persons[i]);
+				  //if(id == item.id) {
+            //setForm(item);
+				  //}
+        //});  
+        for (var i = perArr.length - 1; i >= 0; i--) {
+          if(perArr[i].id == id){
+            setForm(perArr[i]);
+          }
+        };  			
+
+    	});
+
+    	
+    	$("#form-edit-person").on('click', '#update-button', function(){
+        //console.log($('#form-location').val());
+    		jsonObj = {
+    			id: $('#form-uid').val(),
+    			fname: $('#form-fname').val(),
+   				lname: $('#form-lname').val(),
+   				DOB: $('#form-dob').val(),
+   				wage: $('#form-wage').val(),
+   				location: $('#form-location').val()
+   			};
+    		
+    		//console.log(jsonObj);
+		    $.post(url_loc+"/"+$('#form-uid').val(), jsonObj, function(data){
+		    	//console.log("after edit",data);
+		    	ajaxLoad();
+          for (var i = perArr.length - 1; i >= 0; i--) {
+            if(perArr[i].id == data.id){
+              setForm(perArr[i]);
+            }
+          };
+          $('#edit-data').show();
+		   	});
+    	});
+		
+    function setForm(person) {
+      $('#form-fname').val(person.fname);
+      $('#form-lname').val(person.lname);
+      $('#form-dob').val(person.dob);
+      $('#form-dob-str').val(person.getDOB());
+      $('#form-wage').val(person.wage);
+      $('#form-wage-str').val(person.getWage());
+      $('#form-location').val(person.location);
+      $('#form-uid').val(person.id);
+    }
+
+      $('#new-button').on('click', function(){
+        $('#edit-data').hide();
+        $('#json-data').hide();
+        $('#add-person').show();
+        $('#form-add-person').trigger("reset");
+      });
+
+    	$("#form-add-person").on('click', '#add-button', function(){
+    		jsonObj = {
+    			fname: $('#form-add-fname').val(),
+    			lname: $('#form-add-lname').val(),
+    			DOB: $('#form-add-dob').val(),
+    			wage: $('#form-add-wage').val(),
+   				location: $('#form-add-location').val()
+   			};
+   			//console.log(url_loc + "/add");
+	    	$.post(url_loc + "/add", jsonObj, function(result){
+	    		//console.log("after add");
+	    		//console.log(result);
+	    		ajaxLoad();
+	    	});
+    	});
+
+      $('#json-button').on('click', function(){
+        $('#edit-data').hide();
+        $('#add-person').hide();
+        $('#json-text').val(JSON.stringify(persons));
+        $('#json-data').show();
+      });
+    		
+    });
+
+    </script>
+  </head>
+  <body>
+  	<div class="container">
+      <div class="row">
+    		<div class="col-xs-6">
+    			<h1>Personnel</h1>
+          <ul id="userlist" class="list-unstyled"></ul>
+          <button id="json-button" class="btn btn-default btn-lg">Show JSON</button>
+          <button id="new-button" class="btn btn-default btn-lg">Add Person</button>
+        </div>
+    		<div id="edit-data" class="col-xs-6">
+              <h1>Person Info</h1>
+          	<div data-role="content">
+  	            <form id="form-edit-person" class="form-horizontal" role="form">
+                    <div class="form-group">
+                      <label for="form-fname" class="col-sm-2 control-label">First Name</label>
+                      <div class="col-sm-10">
+                        <input id="form-fname" type="text" class="form-control" placeholder="First Name here" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-lname" class="col-sm-2 control-label">Last Name</label>
+                      <div class="col-sm-10">
+                        <input id="form-lname" type="text" class="form-control" placeholder="Last Name here" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-dob" class="col-sm-2 control-label">Edit Date of Birth</label>
+                      <div class="col-sm-10">
+                        <input id="form-dob" type="text" class="form-control" placeholder="Date of birth here yyyy-mm-dd" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-dob-str" class="col-sm-2 control-label">Date of Birth</label>
+                      <div class="col-sm-10">
+                        <input id="form-dob-str" type="text" class="form-control" placeholder="Date of birth here yyyy-mm-dd" disabled/>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-wage" class="col-sm-2 control-label">Edit Wage</label>
+                      <div class="col-sm-10">
+                        <input id="form-wage" type="text" class="form-control" placeholder="Wage here" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-wage-str" class="col-sm-2 control-label">Wage</label>
+                      <div class="col-sm-10">
+                        <input id="form-wage-str" type="text" class="form-control" placeholder="Wage here" disabled />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-location" class="col-sm-2 control-label">Location</label>
+                      <div class="col-sm-10">
+                        <select id="form-location" class="form-control">
+                          <option value="AU">Australia</option>
+                          <option value="UK">United Kingdom</option>
+                          <option value="US">United States</option>
+                        </select>
+                      </div>
+                    </div>
+  	                <input id="form-uid" type="hidden" /></br>
+                    <div class="form-group">
+                      <div class="col-sm-offset-2 col-sm-10">
+                        <button id="update-button" class="btn btn-default btn-lg">Update</button>
+                      </div>
+                    </div>    					      
+  	            </form>
+          	</div>
+    		</div>
+        <div id="json-data" class="col-xs-6">
+          <h1>JSON Data</h1>
+          <textarea id="json-text" class="form-control" rows="20"></textarea>
+        </div>
+    		<div id="add-person" class="col-xs-6">
+              <h1>Add Person</h1>
+          	<div data-role="content">
+  	            <form id="form-add-person" class="form-horizontal" role="form">
+                    <div class="form-group">
+                      <label for="form-add-fname" class="col-sm-2 control-label">First Name</label>
+                      <div class="col-sm-10">
+                        <input id="form-add-fname" type="text" class="form-control" placeholder="First Name here" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-add-lname" class="col-sm-2 control-label">Last Name</label>
+                      <div class="col-sm-10">
+                        <input id="form-add-lname" type="text" class="form-control" placeholder="Last Name here" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-add-dob" class="col-sm-2 control-label">Date of Birth</label>
+                      <div class="col-sm-10">
+                        <input id="form-add-dob" type="text" class="form-control" placeholder="Date of birth here yyyy-mm-dd" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-add-wage" class="col-sm-2 control-label">Wage</label>
+                      <div class="col-sm-10">
+                        <input id="form-add-wage" type="text" class="form-control" placeholder="Wage here" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="form-add-location" class="col-sm-2 control-label">Location</label>
+                      <div class="col-sm-10">
+                        <select id="form-add-location" class="form-control">
+                          <option value="AU">Australia</option>
+                          <option value="UK">United Kingdom</option>
+                          <option value="US">United States</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="col-sm-offset-2 col-sm-10">
+                        <button id="add-button" class="btn btn-default btn-lg">Add</button>
+                      </div>
+                    </div>                    
+  	            </form>
+          	</div>
+    		</div>
+      </div>
+  	</div>
+
+
+
+  </body>
+</html>
